@@ -14,9 +14,10 @@ namespace DynamicMappingSystemTest
         public MapHandlerTests()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<IMapHandler, MapHandler>();
-            services.AddGoogleMappers();
-            services.AddBookingDotComMappers();
+            services.AddDynamicMappingSystem();
+            services.AddDynamicMappingSystemGoogleMappers();
+            services.AddDynamicMappingSystemBookingDotComMappers();
+            
             var serviceProvider = services.BuildServiceProvider();
 
             _mapHandler = new MapHandler(serviceProvider);

@@ -16,7 +16,7 @@ namespace DynamicMappingSystemTest
         public MapHandlersGoogleTests()
         {
             var services = new ServiceCollection();
-            services.AddGoogleMappers();
+            services.AddDynamicMappingSystemGoogleMappers();
             var serviceProvider = services.BuildServiceProvider();
 
             _toGoogleReservationMapper = serviceProvider.GetRequiredService<IMapper<Models.Reservation, Google.Reservation>>();

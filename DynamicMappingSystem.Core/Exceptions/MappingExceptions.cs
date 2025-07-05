@@ -36,4 +36,17 @@ namespace DynamicMappingSystem.Core.Exceptions
             ActualType = actualType;
         }
     }
+
+    public class ValidationException : MappingException
+    {
+        public IReadOnlyList<string> ValidationErrors { get; }
+        public string ValidatedType { get; }
+
+        public ValidationException(string validatedType, IList<string> validationErrors)
+            : base($"Validation failed for {validatedType}: {string.Join("; ", validationErrors)}")
+        {
+            ValidatedType = validatedType;
+            ValidationErrors = validationErrors.ToList().AsReadOnly();
+        }
+    }
 }

@@ -16,7 +16,7 @@ namespace DynamicMappingSystemTest
         public MapHandlersBookingDotComTests()
         {
             var services = new ServiceCollection();
-            services.AddBookingDotComMappers();
+            services.AddDynamicMappingSystemBookingDotComMappers();
             var serviceProvider = services.BuildServiceProvider();
 
             _fromBookingMapper = serviceProvider.GetRequiredService<IMapper<BookingDotCom.Booking, Models.Reservation>>();
