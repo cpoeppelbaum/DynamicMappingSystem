@@ -7,10 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DynamicMappingSystem.Core\DynamicMappingSystem.Core.csproj" />
-    <ProjectReference Include="..\ModelSamples\Internal\Internal.csproj" />
     <PackageReference Include="FluentValidation" Version="12.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DynamicMappingSystem.Core\DynamicMappingSystem.Core.csproj" />
+    <ProjectReference Include="..\..\ModelSamples\External\Google\Google.csproj" />
+    <ProjectReference Include="..\..\ModelSamples\Internal\Internal.csproj" />
   </ItemGroup>
 
 </Project>

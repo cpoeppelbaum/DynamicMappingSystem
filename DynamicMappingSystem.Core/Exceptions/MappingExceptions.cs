@@ -1,4 +1,4 @@
-namespace DynamicMappingSystem.Exceptions
+namespace DynamicMappingSystem.Core.Exceptions
 {
     public class MappingException : Exception
     {
@@ -24,12 +24,12 @@ namespace DynamicMappingSystem.Exceptions
         }
     }
 
-    public class DataTypeMismatchException : MappingException
+    public class SourceDataTypeMismatchException : MappingException
     {
         public Type ExpectedType { get; }
         public Type ActualType { get; }
 
-        public DataTypeMismatchException(Type expectedType, Type actualType)
+        public SourceDataTypeMismatchException(Type expectedType, Type actualType)
             : base($"Data type mismatch. Expected: {expectedType.Name}, Actual: {actualType.Name}")
         {
             ExpectedType = expectedType;

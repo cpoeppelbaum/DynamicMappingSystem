@@ -1,0 +1,137 @@
+﻿using DynamicMappingSystem;
+using DynamicMappingSystem.Core;
+using DynamicMappingSystem.Core.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
+using DynamicMappingSystem.BookingDotCom;
+using DynamicMappingSystem.Google;
+
+namespace DynamicMappingSystemTest
+{
+    public class MapHandlersBookingDotComTests
+    {
+        private readonly IMapHandler _mapHandler;
+
+        public MapHandlersBookingDotComTests()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<IMapHandler, MapHandler>();
+            services.AddGoogleMappers();
+            services.AddBookingDotComMappers();
+            var serviceProvider = services.BuildServiceProvider();
+
+            _mapHandler = new MapHandler(serviceProvider);
+        }
+
+        [Fact]
+        public void Map_BookingDotComToInternal_WithComposedGuest_ShouldMapCorrectly()
+        {
+            // Arrange
+            var bookingDotComBooking = new BookingDotCom.Booking
+            {
+                BookingId = 12345,
+                ArrivalDate = "2024-08-20",
+                DepartureDate = "2024-08-23",
+                GuestDetails = new BookingDotCom.Guest
+                {
+                    FirstName = "Alice",
+                    LastName = "Johnson",
+                    EmailAddress = "alice.johnson@email.com"
+                },
+                AdultCount = 2,
+                RoomTypeId = 789,
+                TotalPrice = 520.75m
+            };
+
+            // Act
+            var result = _mapHandler.Map(bookingDotComBooking, "BookingDotCom.Booking", "Models.Reservation");
+
+            // Assert
+            Assert.NotNull(result);
+            var internalReservation = Assert.IsType<Models.Reservation>(result);
+            Assert.Equal("12345", internalReservation.Id);
+            Assert.Equal(new DateTime(2024, 8, 20), internalReservation.CheckInDate);
+            Assert.Equal(new DateTime(2024, 8, 23), internalReservation.CheckOutDate);
+            Assert.Equal("Alice Johnson", internalReservation.GuestName); // Composed from FirstName + LastName
+            Assert.Equal(2, internalReservation.NumberOfGuests);
+            Assert.Equal("789", internalReservation.RoomId);
+            Assert.Equal(520.75m, internalReservation.TotalAmount);
+        }
+
+        [Fact]
+        public void Map_BookingDotComRoomToInternal_ShouldMapCorrectly()
+        {
+            // Arrange
+            var bookingRoom = new BookingDotCom.Room
+            {
+                RoomTypeId = 555,
+                RoomTypeName = "Standard Double",
+                MaxGuests = 2,
+                BasePrice = 89.99m,
+                Amenities = new List<string> { "WiFi", "TV" }
+            };
+
+            // Act
+            var result = _mapHandler.Map(bookingRoom, "BookingDotCom.Room", "Models.Room");
+
+            // Assert
+            Assert.NotNull(result);
+            var internalRoom = Assert.IsType<Models.Room>(result);
+            Assert.Equal("555", internalRoom.Id);
+            Assert.Equal("Standard Double", internalRoom.RoomType);
+            Assert.Equal(89.99m, internalRoom.PricePerNight);
+            Assert.Equal(2, internalRoom.MaxOccupancy);
+            Assert.Equal(new List<string> { "WiFi", "TV" }, internalRoom.Amenities);
+        }
+
+        [Fact]
+        public void Map_InternalToBookingDotCom_ShouldMapCorrectly()
+        {
+            // Arrange
+            var internalReservation = new Models.Reservation
+            {
+                Id = "999",
+                CheckInDate = new DateTime(2024, 9, 15),
+                CheckOutDate = new DateTime(2024, 9, 18),
+                GuestName = "Max Mustermann",
+                NumberOfGuests = 3,
+                RoomId = "333",
+                TotalAmount = 420.00m
+            };
+
+            // Act
+            var result = _mapHandler.Map(internalReservation, "Models.Reservation", "BookingDotCom.Booking");
+
+            // Assert
+            Assert.NotNull(result);
+            var bookingReservation = Assert.IsType<BookingDotCom.Booking>(result);
+            Assert.Equal(999, bookingReservation.BookingId); // Convert string to int
+            Assert.Equal("2024-09-15", bookingReservation.ArrivalDate);
+            Assert.Equal("2024-09-18", bookingReservation.DepartureDate);
+            Assert.Equal("Max", bookingReservation.GuestDetails.FirstName); // Split name
+            Assert.Equal("Mustermann", bookingReservation.GuestDetails.LastName);
+            Assert.Equal(3, bookingReservation.AdultCount);
+            Assert.Equal(333, bookingReservation.RoomTypeId);
+            Assert.Equal(420.00m, bookingReservation.TotalPrice);
+        }
+
+        [Fact]
+        public void Map_InvalidDateString_BookingDotCom_ShouldThrowException()
+        {
+            // Arrange
+            var booking = new BookingDotCom.Booking
+            {
+                BookingId = 123,
+                ArrivalDate = "invalid-date",
+                DepartureDate = "2024-12-31",
+                GuestDetails = new BookingDotCom.Guest { FirstName = "Test", LastName = "User" },
+                AdultCount = 1,
+                RoomTypeId = 1,
+                TotalPrice = 100m
+            };
+
+            // Act & Assert
+            var exception = Assert.Throws<MappingException>(() =>
+                _mapHandler.Map(booking, "BookingDotCom.Booking", "Models.Reservation"));
+        }
+    }
+}
