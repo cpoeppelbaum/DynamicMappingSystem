@@ -9,17 +9,19 @@ namespace DynamicMappingSystemTest
 {
     public class MapHandlersBookingDotComTests
     {
-        private readonly IMapHandler _mapHandler;
+        private readonly IMapper<BookingDotCom.Booking, Models.Reservation> _fromBookingMapper;
+        private readonly IMapper<BookingDotCom.Room, Models.Room> _fromRoomMapper;
+        private readonly IMapper<Models.Reservation, BookingDotCom.Booking> _toBookingMapper;
 
         public MapHandlersBookingDotComTests()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<IMapHandler, MapHandler>();
-            services.AddGoogleMappers();
             services.AddBookingDotComMappers();
             var serviceProvider = services.BuildServiceProvider();
 
-            _mapHandler = new MapHandler(serviceProvider);
+            _fromBookingMapper = serviceProvider.GetRequiredService<IMapper<BookingDotCom.Booking, Models.Reservation>>();
+            _fromRoomMapper = serviceProvider.GetRequiredService<IMapper<BookingDotCom.Room, Models.Room>>();
+            _toBookingMapper = serviceProvider.GetRequiredService<IMapper<Models.Reservation, BookingDotCom.Booking>>();
         }
 
         [Fact]
@@ -43,7 +45,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(bookingDotComBooking, "BookingDotCom.Booking", "Models.Reservation");
+            var result = _fromBookingMapper.Convert(bookingDotComBooking);
 
             // Assert
             Assert.NotNull(result);
@@ -71,7 +73,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(bookingRoom, "BookingDotCom.Room", "Models.Room");
+            var result = _fromRoomMapper.Convert(bookingRoom);
 
             // Assert
             Assert.NotNull(result);
@@ -99,7 +101,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(internalReservation, "Models.Reservation", "BookingDotCom.Booking");
+            var result = _toBookingMapper.Convert(internalReservation);
 
             // Assert
             Assert.NotNull(result);
@@ -131,7 +133,7 @@ namespace DynamicMappingSystemTest
 
             // Act & Assert
             var exception = Assert.Throws<MappingException>(() =>
-                _mapHandler.Map(booking, "BookingDotCom.Booking", "Models.Reservation"));
+                _fromBookingMapper.Convert(booking));
         }
     }
 }

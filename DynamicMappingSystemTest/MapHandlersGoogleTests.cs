@@ -8,17 +8,21 @@ namespace DynamicMappingSystemTest
 {
     public class MapHandlersGoogleTests
     {
-        private readonly IMapHandler _mapHandler;
+        private readonly IMapper<Models.Reservation, Google.Reservation> _toGoogleReservationMapper;
+        private readonly IMapper<Google.Reservation, Models.Reservation> _fromGoogleReservationMapper;
+        private readonly IMapper<Models.Room, Google.Room> _toGoogleRoomMapper;
+        private readonly IMapper<Google.Room, Models.Room> _fromGoogleRoomMapper;
 
         public MapHandlersGoogleTests()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<IMapHandler, MapHandler>();
             services.AddGoogleMappers();
-            services.AddBookingDotComMappers();
             var serviceProvider = services.BuildServiceProvider();
 
-            _mapHandler = new MapHandler(serviceProvider);
+            _toGoogleReservationMapper = serviceProvider.GetRequiredService<IMapper<Models.Reservation, Google.Reservation>>();
+            _fromGoogleReservationMapper = serviceProvider.GetRequiredService<IMapper<Google.Reservation, Models.Reservation>>();
+            _toGoogleRoomMapper = serviceProvider.GetRequiredService<IMapper<Models.Room, Google.Room>>();
+            _fromGoogleRoomMapper = serviceProvider.GetRequiredService<IMapper<Google.Room, Models.Room>>();
         }
 
         [Fact]
@@ -37,7 +41,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(internalReservation, "Models.Reservation", "Google.Reservation");
+            var result = _toGoogleReservationMapper.Convert(internalReservation);
 
             // Assert
             Assert.NotNull(result);
@@ -71,7 +75,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(googleReservation, "Google.Reservation", "Models.Reservation");
+            var result = _fromGoogleReservationMapper.Convert(googleReservation);
 
             // Assert
             Assert.NotNull(result);
@@ -99,7 +103,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(internalRoom, "Models.Room", "Google.Room");
+            var result = _toGoogleRoomMapper.Convert(internalRoom);
 
             // Assert
             Assert.NotNull(result);
@@ -125,7 +129,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _mapHandler.Map(googleRoom, "Google.Room", "Models.Room");
+            var result = _fromGoogleRoomMapper.Convert(googleRoom);
 
             // Assert
             Assert.NotNull(result);
