@@ -1,4 +1,4 @@
-namespace Internal.Models
+namespace Models
 {
     public class Room
     {
