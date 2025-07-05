@@ -285,7 +285,7 @@ namespace DynamicMappingSystem.Airbnb.Validators
 }
 ```
 
-#### Step 5: Create Service Collection Extensions
+#### Step 4: Create Service Collection Extensions
 
 Create an extension method to register all mappers and validators:
 
@@ -323,7 +323,7 @@ namespace DynamicMappingSystem.Airbnb
 }
 ```
 
-#### Step 6: Register the New Integration
+#### Step 5: Register the new Integration
 
 In your application startup, register the new mappers:
 
@@ -335,7 +335,6 @@ services.AddGoogleMappers();
 services.AddBookingDotComMappers();
 services.AddAirbnbMappers(); // Register new Airbnb integration
 ```
-
 
 ## Assumptions
 
