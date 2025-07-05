@@ -7,7 +7,7 @@ namespace DynamicMappingSystem.Google.Mappers
 {
     internal class FromRoomMapper : IMapper<GoogleModels.Room, Room>
     {
-        public Room Convert(GoogleModels.Room source)
+        public Room Map(GoogleModels.Room source)
         {
             if (source == null) 
             {

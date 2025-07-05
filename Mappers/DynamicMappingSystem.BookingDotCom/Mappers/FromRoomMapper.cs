@@ -7,7 +7,7 @@ namespace DynamicMappingSystem.BookingDotCom.Mappers
 {
     internal class FromRoomMapper : IMapper<BookingDotComModels.Room, Room>
     {
-        public Room Convert(BookingDotComModels.Room source)
+        public Room Map(BookingDotComModels.Room source)
         {
             if (source == null) 
             {

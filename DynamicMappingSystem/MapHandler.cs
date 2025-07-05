@@ -70,7 +70,7 @@ namespace DynamicMappingSystem
                 throw new UnsupportedMappingException(sourceType, targetType);
             }
 
-            var convertMethod = converterType.GetMethod("Convert");
+            var convertMethod = converterType.GetMethod("Map");
 
             object result;
             try

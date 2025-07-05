@@ -41,7 +41,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _toGoogleReservationMapper.Convert(internalReservation);
+            var result = _toGoogleReservationMapper.Map(internalReservation);
 
             // Assert
             Assert.NotNull(result);
@@ -75,7 +75,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _fromGoogleReservationMapper.Convert(googleReservation);
+            var result = _fromGoogleReservationMapper.Map(googleReservation);
 
             // Assert
             Assert.NotNull(result);
@@ -103,7 +103,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _toGoogleRoomMapper.Convert(internalRoom);
+            var result = _toGoogleRoomMapper.Map(internalRoom);
 
             // Assert
             Assert.NotNull(result);
@@ -129,7 +129,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _fromGoogleRoomMapper.Convert(googleRoom);
+            var result = _fromGoogleRoomMapper.Map(googleRoom);
 
             // Assert
             Assert.NotNull(result);

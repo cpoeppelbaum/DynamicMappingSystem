@@ -1,13 +1,13 @@
 namespace DynamicMappingSystem.Core
 {
     /// <summary>
-    /// Specific converter for transformation between two particular types
+    /// Specific mapper for transformation between two particular types
     /// </summary>
     public interface IMapper<TSource, TTarget>
     {
         /// <summary>
-        /// Converts a source object into a target object
+        /// Maps a source object into a target object
         /// </summary>
-        TTarget Convert(TSource source);
+        TTarget Map(TSource source);
     }
 }

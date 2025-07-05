@@ -45,7 +45,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _fromBookingMapper.Convert(bookingDotComBooking);
+            var result = _fromBookingMapper.Map(bookingDotComBooking);
 
             // Assert
             Assert.NotNull(result);
@@ -73,7 +73,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _fromRoomMapper.Convert(bookingRoom);
+            var result = _fromRoomMapper.Map(bookingRoom);
 
             // Assert
             Assert.NotNull(result);
@@ -101,7 +101,7 @@ namespace DynamicMappingSystemTest
             };
 
             // Act
-            var result = _toBookingMapper.Convert(internalReservation);
+            var result = _toBookingMapper.Map(internalReservation);
 
             // Assert
             Assert.NotNull(result);
@@ -133,7 +133,7 @@ namespace DynamicMappingSystemTest
 
             // Act & Assert
             var exception = Assert.Throws<MappingException>(() =>
-                _fromBookingMapper.Convert(booking));
+                _fromBookingMapper.Map(booking));
         }
     }
 }
