@@ -75,17 +75,16 @@ _mapHandler.Map(data: {}, sourceType: "Google.Reservation", targetType: "Models.
 ## Architecture
 
 The system follows a modular architecture with clear separation of concerns:
-DynamicMappingSystem/
-├── DynamicMappingSystem.Core/          # Core interfaces and exceptions
-├── DynamicMappingSystem/               # Main mapping handler and internal validators
-├── Mappers/
-│   ├── DynamicMappingSystem.Google/    # Google-specific mappers and validators
-│   └── DynamicMappingSystem.BookingDotCom/ # BookingDotCom-specific mappers and validators
-├── ModelSamples/
-│   ├── Internal/                       # Internal data models
-│   └── External/                       # External partner data models
-└── DynamicMappingSystemTest/          # Unit tests
-
+DynamicMappingSystem/  
+├── DynamicMappingSystem.Core/          # Core interfaces and exceptions  
+├── DynamicMappingSystem/               # Main mapping handler and internal validators  
+├── Mappers/  
+│   ├── DynamicMappingSystem.Google/    # Google-specific mappers and validators  
+│   └── DynamicMappingSystem.BookingDotCom/ # BookingDotCom-specific mappers and validators  
+├── ModelSamples/  
+│   ├── Internal/                       # Internal data models  
+│   └── External/                       # External partner data models  
+└── DynamicMappingSystemTest/          # Unit tests  
 
 ## Quick Start
 
@@ -286,7 +285,7 @@ namespace DynamicMappingSystem.Airbnb.Validators
 }
 ```
 
-#### Step 5: Create Service Collection Extensions
+#### Step 4: Create Service Collection Extensions
 
 Create an extension method to register all mappers and validators:
 
@@ -324,7 +323,7 @@ namespace DynamicMappingSystem.Airbnb
 }
 ```
 
-#### Step 6: Register the New Integration
+#### Step 5: Register the new Integration
 
 In your application startup, register the new mappers:
 
@@ -336,7 +335,6 @@ services.AddGoogleMappers();
 services.AddBookingDotComMappers();
 services.AddAirbnbMappers(); // Register new Airbnb integration
 ```
-
 
 ## Assumptions
 
