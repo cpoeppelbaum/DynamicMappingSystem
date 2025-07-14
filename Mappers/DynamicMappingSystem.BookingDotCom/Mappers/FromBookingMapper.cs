@@ -7,7 +7,7 @@ namespace DynamicMappingSystem.BookingDotCom.Mappers
 {
     internal class FromBookingMapper : IMapper<BookingDotComModels.Booking, Reservation>
     {
-        public Reservation Map(BookingDotComModels.Booking source)
+        public override Reservation Map(BookingDotComModels.Booking source)
         {
             if (source == null)
             {

@@ -3,7 +3,6 @@ using DynamicMappingSystem.BookingDotCom;
 using DynamicMappingSystem.Core;
 using DynamicMappingSystem.Core.Exceptions;
 using DynamicMappingSystem.Google;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicMappingSystemTest
 {
@@ -13,14 +12,9 @@ namespace DynamicMappingSystemTest
 
         public MapHandlerTests()
         {
-            var services = new ServiceCollection();
-            services.AddDynamicMappingSystem();
-            services.AddDynamicMappingSystemGoogleMappers();
-            services.AddDynamicMappingSystemBookingDotComMappers();
-            
-            var serviceProvider = services.BuildServiceProvider();
-
-            _mapHandler = new MapHandler(serviceProvider);
+            _mapHandler = MapHandler.Create().AddInternalValidators()
+                .AddGoogleMappers()
+                .AddBookingDotComMappers();
         }
 
         [Fact]
@@ -53,23 +47,33 @@ namespace DynamicMappingSystemTest
             var reservation = new Models.Reservation();
 
             // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() =>
+            var exception = Assert.Throws<SourceDataTypeMismatchException>(() =>
                 _mapHandler.Map(reservation, "Invalid.Type", "Google.Reservation"));
-            
-            Assert.Contains("Unsupported source type", exception.Message);
         }
 
         [Fact]
         public void Map_InvalidTargetType_ShouldThrowException()
         {
             // Arrange
-            var reservation = new Models.Reservation();
+            var bookingDotComBooking = new BookingDotCom.Booking
+            {
+                BookingId = 12345,
+                ArrivalDate = "2024-08-20",
+                DepartureDate = "2024-08-23",
+                GuestDetails = new BookingDotCom.Guest
+                {
+                    FirstName = "Alice",
+                    LastName = "Johnson",
+                    EmailAddress = "alice.johnson@email.com"
+                },
+                AdultCount = 2,
+                RoomTypeId = 789,
+                TotalPrice = 520.75m
+            };
 
             // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() =>
-                _mapHandler.Map(reservation, "Models.Reservation", "Invalid.Type"));
-            
-            Assert.Contains("Unsupported target type", exception.Message);
+            var exception = Assert.Throws<UnsupportedMappingException>(() =>
+                _mapHandler.Map(bookingDotComBooking, "BookingDotCom.Booking", "Invalid.Type"));
         }
 
         [Fact]

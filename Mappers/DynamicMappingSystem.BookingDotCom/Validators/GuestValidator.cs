@@ -1,9 +1,10 @@
 using BookingDotCom;
+using DynamicMappingSystem.Core;
 using FluentValidation;
 
 namespace DynamicMappingSystem.BookingDotCom.Validators
 {
-    public class GuestValidator : AbstractValidator<Guest>
+    public class GuestValidator : AbstractDMSValidator<Guest>
     {
         public GuestValidator()
         {        RuleFor(x => x.FirstName)

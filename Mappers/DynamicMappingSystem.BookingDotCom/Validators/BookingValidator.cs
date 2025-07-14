@@ -1,10 +1,10 @@
 using BookingDotCom;
+using DynamicMappingSystem.Core;
 using FluentValidation;
-using System;
 
 namespace DynamicMappingSystem.BookingDotCom.Validators
 {
-    public class BookingValidator : AbstractValidator<Booking>
+    public class BookingValidator : AbstractDMSValidator<Booking>
     {
         public BookingValidator()
         {        RuleFor(x => x.BookingId)

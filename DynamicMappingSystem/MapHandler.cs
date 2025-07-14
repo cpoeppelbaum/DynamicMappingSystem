@@ -1,7 +1,7 @@
 using DynamicMappingSystem.Core;
 using DynamicMappingSystem.Core.Exceptions;
+using DynamicMappingSystem.Validators;
 using FluentValidation;
-using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace DynamicMappingSystem
@@ -11,13 +11,75 @@ namespace DynamicMappingSystem
     /// </summary>
     public class MapHandler : IMapHandler
     {
-        private readonly IServiceProvider _serviceProvider;
-        
-        public MapHandler(IServiceProvider serviceProvider)
+        private readonly Dictionary<Tuple<string, string>, IMapper> _converterRegistry = new Dictionary<Tuple<string, string>, IMapper>();
+        private readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        private readonly Dictionary<string, IDMSValidator> _validatorRegistry = new Dictionary<string, IDMSValidator>();
+
+        private MapHandler() { }
+
+        public static IMapHandler Create()
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            return new MapHandler();
         }
-        
+
+        /// <summary>
+        /// Registers a converter instance
+        /// </summary>
+        public IMapHandler RegisterMapper<TSource, TTarget>(IMapper<TSource, TTarget> converter)
+        {
+            if (converter == null) 
+            {
+                throw new ArgumentNullException(nameof(converter));
+            }
+            
+            var sourceType = typeof(TSource).FullName;
+            var targetType = typeof(TTarget).FullName;
+            
+            if (string.IsNullOrWhiteSpace(sourceType) || string.IsNullOrWhiteSpace(targetType))
+            {
+                throw new ArgumentException("Source and target types must have valid names.");
+            }
+            
+            var key = Tuple.Create(sourceType, targetType);
+            _converterRegistry[key] = converter;
+            
+            // Cache the types for faster lookup
+            _typeCache[sourceType] = typeof(TSource);
+            _typeCache[targetType] = typeof(TTarget);
+
+            return this;
+        }
+
+        public IMapHandler RegisterValidator<T>(AbstractDMSValidator<T> validator)
+        {
+            if (validator == null) 
+            {
+                throw new ArgumentNullException(nameof(validator));
+            }
+            
+            var typeName = typeof(T).FullName;
+            
+            if (string.IsNullOrWhiteSpace(typeName))
+            {
+                throw new ArgumentException("Type must have a valid name.");
+            }
+            
+            _validatorRegistry[typeName] = validator;
+            
+            // Cache the type for faster lookup
+            _typeCache[typeName] = typeof(T);
+
+            return this;
+        }
+
+        public IMapHandler RegisterInternalValidators<T>()
+        {
+            this.RegisterValidator(new ReservationValidator());
+            this.RegisterValidator(new RoomValidator());
+
+            return this;
+        }
+
         public object Map(object data, string sourceType, string targetType)
         {
             // Validation
@@ -34,49 +96,38 @@ namespace DynamicMappingSystem
                 throw new ArgumentException("Target type cannot be empty", nameof(targetType));
             }
 
-            var sourceModelType = ResolveType(sourceType);
-            var targetModelType = ResolveType(targetType);
+            var sourceModelType = GetTypeFromCacheOrResolve(sourceType);
 
-            if (sourceModelType == null)
-            {
-                throw new ArgumentException($"Unsupported source type: {sourceType}", nameof(sourceType));
-            }
-            if (targetModelType == null)
-            {
-                throw new ArgumentException($"Unsupported target type: {targetType}", nameof(targetType));
-            }
-                
             // Check if the input data object is of the correct type
-            if (!sourceModelType.IsInstanceOfType(data))
+            if (sourceModelType == null || !sourceModelType.IsInstanceOfType(data))
             {
-                throw new SourceDataTypeMismatchException(sourceModelType, data.GetType());
+                throw new SourceDataTypeMismatchException(sourceType, data?.GetType()?.FullName ?? "null");
             }
 
             // Validate source object before conversion
-            var sourceValidationResult = ValidateObject(data, sourceModelType, sourceType);
+            var sourceValidationResult = ValidateObject(data, sourceType);
             if (sourceValidationResult.Any())
             {
                 throw new Core.Exceptions.ValidationException(sourceType, sourceValidationResult);
             }
 
-            // Create generic converter type
-            var converterType = typeof(IMapper<,>).MakeGenericType(sourceModelType, targetModelType);
+            // Try to get converter from registry first
+            var key = Tuple.Create(sourceType, targetType);
+            IMapper? mapper = null;
             
-            // Get converter from registry
-            var converter = _serviceProvider.GetService(converterType);
-            
-            if (converter == null)
+            if (_converterRegistry.TryGetValue(key, out var registeredConverter))
+            {
+                mapper = registeredConverter;
+            }
+            else
             {
                 throw new UnsupportedMappingException(sourceType, targetType);
             }
 
-            var convertMethod = converterType.GetMethod("Map");
-
             object result;
             try
             {
-                // Now actually invoke conversion method
-                result = convertMethod!.Invoke(converter, new[] { data })!;
+                result = mapper.Map(data);
             }
             catch (TargetInvocationException ex)
             {
@@ -93,9 +144,12 @@ namespace DynamicMappingSystem
                     
                 throw new MappingException($"Error converting from {sourceType} to {targetType}", ex.InnerException);
             }
+            catch (Exception ex) when (!(ex is MappingException))
+            {
+                throw new MappingException($"Error converting from {sourceType} to {targetType}", ex);
+            }
 
-            // Validate target object after conversion
-            var convertedValidationResult = ValidateObject(result, targetModelType, targetType);
+            var convertedValidationResult = ValidateObject(result, targetType);
             if (convertedValidationResult.Any())
             {
                 throw new Core.Exceptions.ValidationException(targetType, convertedValidationResult);
@@ -107,64 +161,14 @@ namespace DynamicMappingSystem
         /// <summary>
         /// Validates an object using the appropriate validator if one exists
         /// </summary>
-        private List<string> ValidateObject(object obj, Type objectType, string typeName)
+        private List<string> ValidateObject(object obj, string typeName)
         {
-            if (obj == null) { throw new ArgumentNullException("obj"); }
+            if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
 
-            // Create validator type for the object
-            var validatorType = typeof(FluentValidation.IValidator<>).MakeGenericType(objectType);
-            
-            // Try to get validator from service provider
-            var validator = _serviceProvider.GetService(validatorType);
-            
-            if (validator != null)
+            // Try to get validator from registry first (fastest)
+            if (_validatorRegistry.TryGetValue(typeName, out var registeredValidator))
             {
-                // Get the Validate method
-                var validateMethod = validatorType.GetMethod("Validate", new[] { objectType });
-                
-                if (validateMethod != null)
-                {
-                    // Invoke validation
-                    var validationResult = validateMethod.Invoke(validator, new[] { obj });
-                        
-                    // Check if it's a FluentValidation ValidationResult
-                    var isValidProperty = validationResult?.GetType().GetProperty("IsValid");
-                    var errorsProperty = validationResult?.GetType().GetProperty("Errors");
-                        
-                    if (isValidProperty != null && errorsProperty != null)
-                    {
-                        var isValid = (bool)(isValidProperty.GetValue(validationResult) ?? true);
-                            
-                        if (!isValid)
-                        {
-                            var errors = errorsProperty.GetValue(validationResult);
-                            var errorMessages = new List<string>();
-                                
-                            // Extract error messages from FluentValidation errors
-                            if (errors is System.Collections.IEnumerable errorCollection)
-                            {
-                                foreach (var error in errorCollection)
-                                {
-                                    var errorMessageProperty = error?.GetType().GetProperty("ErrorMessage");
-                                    if (errorMessageProperty != null)
-                                    {
-                                        var errorMessage = errorMessageProperty.GetValue(error)?.ToString();
-                                        if (!string.IsNullOrEmpty(errorMessage))
-                                        {
-                                            errorMessages.Add(errorMessage);
-                                        }
-                                    }
-                                }
-                            }
-                            // Validation completed, return error messages
-                            return errorMessages;
-                        }
-                        // Validation completed, no errors found
-                        return new List<string>();
-                    }
-                    throw new MappingException($"Validator for type '{typeName}' does not have a valid 'IsValid' or 'Errors' property.");
-                }
-                throw new MappingException($"Validator for type '{typeName}' does not have a valid 'Validate' method.");
+                return registeredValidator.ValidateObject(obj).Errors;
             }
 
             throw new MappingException($"Validator for type '{typeName}' not found. If no validation is needed, create an empty validator for this type.");
@@ -193,6 +197,25 @@ namespace DynamicMappingSystem
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Gets type from cache first, then resolves if not cached
+        /// </summary>
+        private Type? GetTypeFromCacheOrResolve(string typeName)
+        {
+            if (_typeCache.TryGetValue(typeName, out var cachedType))
+            {
+                return cachedType;
+            }
+
+            var resolvedType = ResolveType(typeName);
+            if (resolvedType != null)
+            {
+                _typeCache[typeName] = resolvedType;
+            }
+
+            return resolvedType;
         }
     }
 }

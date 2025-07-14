@@ -1,8 +1,5 @@
-﻿using DynamicMappingSystem;
-using DynamicMappingSystem.BookingDotCom;
-using DynamicMappingSystem.Core;
+﻿using DynamicMappingSystem.Core;
 using DynamicMappingSystem.Google;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicMappingSystemTest
 {
@@ -15,14 +12,20 @@ namespace DynamicMappingSystemTest
 
         public MapHandlersGoogleTests()
         {
-            var services = new ServiceCollection();
-            services.AddDynamicMappingSystemGoogleMappers();
-            var serviceProvider = services.BuildServiceProvider();
+            var mapHandlerStub = new MapHandlerStub();
+            mapHandlerStub.AddGoogleMappers();
 
-            _toGoogleReservationMapper = serviceProvider.GetRequiredService<IMapper<Models.Reservation, Google.Reservation>>();
-            _fromGoogleReservationMapper = serviceProvider.GetRequiredService<IMapper<Google.Reservation, Models.Reservation>>();
-            _toGoogleRoomMapper = serviceProvider.GetRequiredService<IMapper<Models.Room, Google.Room>>();
-            _fromGoogleRoomMapper = serviceProvider.GetRequiredService<IMapper<Google.Room, Models.Room>>();
+            _toGoogleReservationMapper = mapHandlerStub.GetMapper<Models.Reservation, Google.Reservation>();
+            _fromGoogleReservationMapper = mapHandlerStub.GetMapper <Google.Reservation, Models.Reservation>();
+            _toGoogleRoomMapper = mapHandlerStub.GetMapper <Models.Room, Google.Room>();
+            _fromGoogleRoomMapper = mapHandlerStub.GetMapper <Google.Room, Models.Room>();
+
+            // Assert that all three mappers have been registered
+            mapHandlerStub.ValidateAllMappersHaveBeenAskedFor();
+            Assert.NotNull(_toGoogleReservationMapper);
+            Assert.NotNull(_fromGoogleReservationMapper);
+            Assert.NotNull(_toGoogleRoomMapper);
+            Assert.NotNull(_fromGoogleRoomMapper);
         }
 
         [Fact]

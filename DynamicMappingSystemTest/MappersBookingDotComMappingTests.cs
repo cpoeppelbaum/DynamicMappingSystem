@@ -1,9 +1,6 @@
-﻿using DynamicMappingSystem;
-using DynamicMappingSystem.Core;
+﻿using DynamicMappingSystem.Core;
 using DynamicMappingSystem.Core.Exceptions;
-using Microsoft.Extensions.DependencyInjection;
 using DynamicMappingSystem.BookingDotCom;
-using DynamicMappingSystem.Google;
 
 namespace DynamicMappingSystemTest
 {
@@ -15,13 +12,18 @@ namespace DynamicMappingSystemTest
 
         public MapHandlersBookingDotComTests()
         {
-            var services = new ServiceCollection();
-            services.AddDynamicMappingSystemBookingDotComMappers();
-            var serviceProvider = services.BuildServiceProvider();
+            var mapHandlerStub = new MapHandlerStub();
+            mapHandlerStub.AddBookingDotComMappers();
 
-            _fromBookingMapper = serviceProvider.GetRequiredService<IMapper<BookingDotCom.Booking, Models.Reservation>>();
-            _fromRoomMapper = serviceProvider.GetRequiredService<IMapper<BookingDotCom.Room, Models.Room>>();
-            _toBookingMapper = serviceProvider.GetRequiredService<IMapper<Models.Reservation, BookingDotCom.Booking>>();
+            _fromBookingMapper = mapHandlerStub.GetMapper<BookingDotCom.Booking, Models.Reservation>();
+            _fromRoomMapper = mapHandlerStub.GetMapper<BookingDotCom.Room, Models.Room>();
+            _toBookingMapper = mapHandlerStub.GetMapper<Models.Reservation, BookingDotCom.Booking>();
+
+            // Assert that all three mappers have been registered
+            mapHandlerStub.ValidateAllMappersHaveBeenAskedFor();
+            Assert.NotNull(_fromBookingMapper);
+            Assert.NotNull(_fromRoomMapper);
+            Assert.NotNull(_toBookingMapper);
         }
 
         [Fact]

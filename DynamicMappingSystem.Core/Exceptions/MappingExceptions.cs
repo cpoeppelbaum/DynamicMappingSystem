@@ -26,11 +26,11 @@ namespace DynamicMappingSystem.Core.Exceptions
 
     public class SourceDataTypeMismatchException : MappingException
     {
-        public Type ExpectedType { get; }
-        public Type ActualType { get; }
+        public string ExpectedType { get; }
+        public string ActualType { get; }
 
-        public SourceDataTypeMismatchException(Type expectedType, Type actualType)
-            : base($"Data type mismatch. Expected: {expectedType.Name}, Actual: {actualType.Name}")
+        public SourceDataTypeMismatchException(string expectedType, string actualType)
+            : base($"Data type mismatch. Expected: {expectedType}, Actual: {actualType}")
         {
             ExpectedType = expectedType;
             ActualType = actualType;

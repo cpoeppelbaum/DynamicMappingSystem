@@ -1,9 +1,10 @@
+using DynamicMappingSystem.Core;
 using FluentValidation;
 using Google;
 
 namespace DynamicMappingSystem.Google.Validators
 {
-    public class RoomValidator : AbstractValidator<Room>
+    public class RoomValidator : AbstractDMSValidator<Room>
     {
         public RoomValidator()
         {

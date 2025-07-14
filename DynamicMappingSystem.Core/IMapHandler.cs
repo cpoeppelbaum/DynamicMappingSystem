@@ -1,3 +1,5 @@
+using FluentValidation;
+
 namespace DynamicMappingSystem.Core
 {
     /// <summary>
@@ -9,5 +11,15 @@ namespace DynamicMappingSystem.Core
         /// Converts a data object from source type to target type
         /// </summary>
         object Map(object data, string sourceType, string targetType);
+
+        /// <summary>
+        /// Registers a converter for direct registry lookup, improving performance
+        /// </summary>
+        IMapHandler RegisterMapper<TSource, TTarget>(IMapper<TSource, TTarget> converter);
+
+        /// <summary>
+        /// Registers a validator for direct registry lookup, improving validation performance
+        /// </summary>
+        IMapHandler RegisterValidator<T>(AbstractDMSValidator<T> validator);
     }
 }
