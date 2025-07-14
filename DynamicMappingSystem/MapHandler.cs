@@ -12,7 +12,7 @@ namespace DynamicMappingSystem
     public class MapHandler : IMapHandler
     {
         private readonly Dictionary<Tuple<string, string>, IMapper> _converterRegistry = new Dictionary<Tuple<string, string>, IMapper>();
-        private readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        private readonly Dictionary<string, Type> _typeRegistry = new Dictionary<string, Type>();
         private readonly Dictionary<string, IDMSValidator> _validatorRegistry = new Dictionary<string, IDMSValidator>();
 
         private MapHandler() { }
@@ -44,8 +44,8 @@ namespace DynamicMappingSystem
             _converterRegistry[key] = converter;
             
             // Cache the types for faster lookup
-            _typeCache[sourceType] = typeof(TSource);
-            _typeCache[targetType] = typeof(TTarget);
+            _typeRegistry[sourceType] = typeof(TSource);
+            _typeRegistry[targetType] = typeof(TTarget);
 
             return this;
         }
@@ -65,9 +65,6 @@ namespace DynamicMappingSystem
             }
             
             _validatorRegistry[typeName] = validator;
-            
-            // Cache the type for faster lookup
-            _typeCache[typeName] = typeof(T);
 
             return this;
         }
@@ -96,7 +93,7 @@ namespace DynamicMappingSystem
                 throw new ArgumentException("Target type cannot be empty", nameof(targetType));
             }
 
-            var sourceModelType = GetTypeFromCacheOrResolve(sourceType);
+            var sourceModelType = GetTypeFromRegistry(sourceType);
 
             // Check if the input data object is of the correct type
             if (sourceModelType == null || !sourceModelType.IsInstanceOfType(data))
@@ -175,47 +172,15 @@ namespace DynamicMappingSystem
         }
 
         /// <summary>
-        /// Resolves a type name to a Type object by searching through all loaded assemblies
-        /// </summary>
-        private static Type? ResolveType(string typeName)
-        {
-            // First try to load the type directly
-            var type = Type.GetType(typeName, false);
-            if (type != null)
-            {
-                return type;
-            }
-
-            // If not found, search through all loaded assemblies
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                type = assembly.GetType(typeName, false);
-                if (type != null)
-                {
-                    return type;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Gets type from cache first, then resolves if not cached
         /// </summary>
-        private Type? GetTypeFromCacheOrResolve(string typeName)
+        private Type? GetTypeFromRegistry(string typeName)
         {
-            if (_typeCache.TryGetValue(typeName, out var cachedType))
+            if (_typeRegistry.TryGetValue(typeName, out var registeredType))
             {
-                return cachedType;
+                return registeredType;
             }
-
-            var resolvedType = ResolveType(typeName);
-            if (resolvedType != null)
-            {
-                _typeCache[typeName] = resolvedType;
-            }
-
-            return resolvedType;
+            else return null;
         }
     }
 }
