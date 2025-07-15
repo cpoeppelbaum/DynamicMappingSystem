@@ -127,5 +127,99 @@ namespace DynamicMappingSystemTest
             result.ShouldHaveValidationErrorFor(x => x.GuestFullName)
                   .WithErrorMessage("GuestFullName must not exceed 200 characters.");
         }
+
+        [Fact]
+        public void Map_ValidRoom_ShouldPassValidation()
+        {
+            // Arrange
+            var validRoom = new Room
+            {
+                AccommodationId = "GOOG-ROOM-123",
+                Category = "Deluxe Suite",
+                NightlyRate = 199.99,
+                GuestCapacity = 4,
+                Features = new[] { "WiFi", "TV", "Balcony" }
+            };
+
+            // Act & Assert
+            var result = _roomValidator.TestValidate(validRoom);
+            result.ShouldNotHaveAnyValidationErrors();
+        }
+
+        [Fact]
+        public void Map_RoomWithEmptyAccommodationId_ShouldFailValidation()
+        {
+            // Arrange
+            var invalidRoom = new Room
+            {
+                AccommodationId = "",
+                Category = "Deluxe Suite",
+                NightlyRate = 199.99,
+                GuestCapacity = 4,
+                Features = new[] { "WiFi", "TV" }
+            };
+
+            // Act & Assert
+            var result = _roomValidator.TestValidate(invalidRoom);
+            result.ShouldHaveValidationErrorFor(x => x.AccommodationId)
+                  .WithErrorMessage("AccommodationId is required.");
+        }
+
+        [Fact]
+        public void Map_RoomWithNegativeNightlyRate_ShouldFailValidation()
+        {
+            // Arrange
+            var invalidRoom = new Room
+            {
+                AccommodationId = "GOOG-ROOM-123",
+                Category = "Deluxe Suite",
+                NightlyRate = -10.0,
+                GuestCapacity = 2,
+                Features = new[] { "WiFi" }
+            };
+
+            // Act & Assert
+            var result = _roomValidator.TestValidate(invalidRoom);
+            result.ShouldHaveValidationErrorFor(x => x.NightlyRate)
+                  .WithErrorMessage("NightlyRate must be greater than 0.");
+        }
+
+        [Fact]
+        public void Map_RoomWithZeroGuestCapacity_ShouldFailValidation()
+        {
+            // Arrange
+            var invalidRoom = new Room
+            {
+                AccommodationId = "GOOG-ROOM-123",
+                Category = "Deluxe Suite",
+                NightlyRate = 100.0,
+                GuestCapacity = 0,
+                Features = new[] { "WiFi" }
+            };
+
+            // Act & Assert
+            var result = _roomValidator.TestValidate(invalidRoom);
+            result.ShouldHaveValidationErrorFor(x => x.GuestCapacity)
+                  .WithErrorMessage("GuestCapacity must be at least 1.");
+        }
+
+        [Fact]
+        public void Map_RoomWithLongCategory_ShouldFailValidation()
+        {
+            // Arrange
+            var invalidRoom = new Room
+            {
+                AccommodationId = "GOOG-ROOM-123",
+                Category = new string('X', 201), // Too long for 200 max
+                NightlyRate = 100.0,
+                GuestCapacity = 2,
+                Features = new[] { "WiFi" }
+            };
+
+            // Act & Assert
+            var result = _roomValidator.TestValidate(invalidRoom);
+            result.ShouldHaveValidationErrorFor(x => x.Category)
+                  .WithErrorMessage("Category must not exceed 200 characters.");
+        }
     }
 }

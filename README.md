@@ -31,6 +31,8 @@ The system dynamically resolves mappers and validators at runtime using fully qu
 ## History
 
 The project was done in TDD as a showcase and shows a development from a quick prototype to a more sophisticated approach.
+Disclaimer: I relied heavily on Copilot for generating the test cases and admitably didn't take a lot of time to review them.
+
 ### V1
 
 The first version made use of IServiceCollection to register the mappers, to serve asp.net habits and also used reflection to resolve the types of the given strings from the very generic method signature which was a requirement.
