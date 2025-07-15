@@ -4,7 +4,7 @@ using Models;
 
 namespace DynamicMappingSystem.Validators
 {
-    public class ReservationValidator : AbstractDMSValidator<Reservation>
+    internal class ReservationValidator : AbstractDMSValidator<Reservation>
     {
         public ReservationValidator()
         {

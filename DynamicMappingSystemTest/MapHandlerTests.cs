@@ -12,7 +12,7 @@ namespace DynamicMappingSystemTest
 
         public MapHandlerTests()
         {
-            _mapHandler = MapHandler.Create().AddInternalValidators()
+            _mapHandler = MapHandler.Create()
                 .AddGoogleMappers()
                 .AddBookingDotComMappers();
         }

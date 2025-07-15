@@ -4,7 +4,7 @@ using Google;
 
 namespace DynamicMappingSystem.Google.Validators
 {
-    public class RoomValidator : AbstractDMSValidator<Room>
+    internal class RoomValidator : AbstractDMSValidator<Room>
     {
         public RoomValidator()
         {

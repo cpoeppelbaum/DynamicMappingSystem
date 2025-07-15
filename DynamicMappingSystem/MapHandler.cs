@@ -1,7 +1,6 @@
 using DynamicMappingSystem.Core;
 using DynamicMappingSystem.Core.Exceptions;
 using DynamicMappingSystem.Validators;
-using FluentValidation;
 using System.Reflection;
 
 namespace DynamicMappingSystem
@@ -19,7 +18,10 @@ namespace DynamicMappingSystem
 
         public static IMapHandler Create()
         {
-            return new MapHandler();
+            var mapHandler = new MapHandler();
+            mapHandler.RegisterValidator(new ReservationValidator());
+            mapHandler.RegisterValidator(new RoomValidator());
+            return mapHandler;
         }
 
         /// <summary>

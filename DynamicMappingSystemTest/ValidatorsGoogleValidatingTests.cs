@@ -1,16 +1,27 @@
-using Google;
+using DynamicMappingSystem.Core;
+using DynamicMappingSystem.Google;
 using FluentValidation.TestHelper;
-using DynamicMappingSystem.Google.Validators;
+using Google;
 
 namespace DynamicMappingSystemTest
 {
     public class GoogleValidatingTests
     {
-        private readonly ReservationValidator _reservationValidator;
+        private readonly AbstractDMSValidator<Reservation> _reservationValidator;
+        private readonly AbstractDMSValidator<Room> _roomValidator;
 
         public GoogleValidatingTests()
         {
-            _reservationValidator = new ReservationValidator();
+            var mapHandlerStub = new MapHandlerStub();
+            mapHandlerStub.AddGoogleMappers();
+
+            _reservationValidator = mapHandlerStub.GetValidator<Reservation>();
+            _roomValidator = mapHandlerStub.GetValidator<Room>();
+
+            // Assert that the validator have been registered
+            mapHandlerStub.ValidateAllValidatorsHaveBeenAskedFor();
+            Assert.NotNull(_reservationValidator);
+
         }
 
         [Fact]

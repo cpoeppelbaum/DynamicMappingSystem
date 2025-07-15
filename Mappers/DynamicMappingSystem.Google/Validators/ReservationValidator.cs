@@ -4,7 +4,7 @@ using Google;
 
 namespace DynamicMappingSystem.Google.Validators
 {
-    public class ReservationValidator : AbstractDMSValidator<Reservation>
+    internal class ReservationValidator : AbstractDMSValidator<Reservation>
     {
         public ReservationValidator()
         {

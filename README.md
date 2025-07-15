@@ -6,6 +6,7 @@ It dynamically applies validators and mappers by given types as fully qualified 
 ## Table of Contents
 
 - [Overview](#overview)
+- [History](#history)
 - [Dependencies](#dependencies)
 - [Project Requirements](#project-requirements)
 - [Architecture](#architecture)
@@ -22,10 +23,22 @@ The Dynamic Mapping System enables seamless data transformation. E.g.:
 - External partner to internal data models (`BookingDotCom.Booking` --> `Models.Reservation` )
 
 The system dynamically resolves mappers and validators at runtime using fully qualified type names as strings, providing flexibility while maintaining type safety through:
-- **Runtime Type Resolution**: Automatically discovers and instantiates appropriate mappers based on string type identifiers.
+- **Runtime Type Resolution**: Automatically instantiates appropriate mappers based on string type identifiers.
 - **Dual Validation**: Validates both input and output data using FluentValidation rules.
 - **Type Safety**: Ensures data integrity through strongly-typed mappers.
 - **Extensibility**: Allows easy addition of new partners and data formats without modifying existing code.
+
+## History
+
+The project was done in TDD as a showcase and shows a development from a quick prototype to a more sophisticated approach.
+### V1
+
+The first version made use of IServiceCollection to register the mappers, to serve asp.net habits and also used reflection to resolve the types of the given strings from the very generic method signature which was a requirement.
+
+### V2
+
+The second version uses custom registration methods with generic parameters. This registration of the converters also stores the source and target types in a dictionary by basically using the "toString" of the generic parameters as keys and the types as values.
+Therefore no reflection is used anymore. The use of IServiceCollection could be easily reintroduced by providing an extension method which does the "AddSingleton" while also calling the custom Registration method.
 
 ## Dependencies
 
@@ -33,35 +46,29 @@ This project uses the nuget package FluentValidation, Version="12.0.0" (Apache L
 
 ## Project Requirements
 
-The system is designed to handle both the conversion of internal models to partner-specific formats and the mapping of incoming partner data to internal models.
+The system`s functionality is to handle both the conversion of internal models to 3rd party formats and vise versa. Easily extendable and with a specific interface for the given context.
 
 ### 1. Mapping System Core
 
 - Core mapping handler class (`MapHandler`) with the following method signature:
+
 ```csharp
 _mapHandler.Map(object data, string sourceType, string targetType);
+_mapHandler.Map(data: {}, sourceType: "Models.Reservation", targetType: "Google.Reservation"); // e.g. map an internal `Reservation` object to a data model that is expected by Google
+_mapHandler.Map(data: {}, sourceType: "Google.Reservation", targetType: "Models.Reservation"); // e.g. map a `Reservation` payload from Google to the internal `Reservation` data
 ```
+
 This method maps data between various source and target formats based on the provided `sourceType` and `targetType`.
 
 ### 2. Supported Data Formats
 
 The system supports the following mappings:
-- From the internal C# data models (e.g., `Models.Reservation`, `Models.Room`, etc.) to partner-specific data models.
-- From partner-specific data models to the internal C# data models.
+- From the internal C# data models (e.g., `Models.Reservation`, `Models.Room`, etc.) to
+	- **imagined** formats of a google vacations booking system
+	- imagined formats of the booking.com vacations booking system
+	- back to the project specific *internal* models
 
-### 3. Mapping Scenarios
-
-The system is capable of handling scenarios such as:
-
-- Mapping an internal `Reservation` object to a data model that is expected by Google:
- ```csharp
-_mapHandler.Map(data: {}, sourceType: "Models.Reservation", targetType: "Google.Reservation");
-```
-
-- Mapping a `Reservation` payload from Google to the internal `Reservation` data model:
-```csharp
-_mapHandler.Map(data: {}, sourceType: "Google.Reservation", targetType: "Models.Reservation");
-```
+This project is not related to, or uses any package from any of the aforementioned companies.
 
 ### 4. Extensibility
 
@@ -90,24 +97,21 @@ DynamicMappingSystem/
 
 ### 1. Installation
 
-This project was created with Dependency Injection Services in mind, therefore is dependent on an IServiceCollection implementation.
-If your project doesn't use any yet, you can add the necessary NuGet package to your project:
+Add the necessary NuGet package to your project:
+- FluentValidation Version="12.0.0"
 
-<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-### 2. Setup Dependency Injection
+### 2. Setup and Registration
 
 ```csharp
-var services = new ServiceCollection();
+// Create the mapping handler
+var mapHandler = MapHandler.Create();
 
-// Register core system
-services.AddDynamicMappingSystem();
-
-// Register partner-specific mappers
-services.AddDynamicMappingSystemGoogleMappers();
-services.AddDynamicMappingSystemBookingDotComMappers();
-
-var serviceProvider = services.BuildServiceProvider();
-var mapHandler = serviceProvider.GetRequiredService<IMapHandler>();
+// Register mappers and validators directly
+mapHandler.RegisterMapper<Models.Reservation, Google.Reservation>(new ToGoogleReservationMapper());
+mapHandler.RegisterMapper<Google.Reservation, Models.Reservation>(new FromGoogleReservationMapper());
+mapHandler.RegisterValidator<Models.Reservation>(new ReservationValidator());
+mapHandler.RegisterValidator<Google.Reservation>(new GoogleReservationValidator());
+// ...register other mappers/validators as needed
 ```
 
 ### 3. Basic Usage
@@ -137,6 +141,7 @@ var internalData = mapHandler.Map(
 #### 1. IMapHandler
 
 The main entry point for all mapping operations.
+
 ```csharp
 public interface IMapHandler
 {
@@ -147,6 +152,7 @@ public interface IMapHandler
 #### 2. IMapper<TSource, TTarget>
 
 Specific mapper interface for transformation between two particular types.
+
 ```csharp
 public interface IMapper<TSource, TTarget>
 {
@@ -159,7 +165,7 @@ public interface IMapper<TSource, TTarget>
 Main implementation that:
 - Dynamically resolves types from string identifiers using reflection
 - Validates input data using FluentValidation
-- Resolves appropriate mapper from DI container
+- Resolves appropriate mapper and validator from internal registries
 - Performs the mapping
 - Validates output data to ensure integrity
 - Handles exceptions and error reporting
@@ -178,11 +184,8 @@ To add support for a new partner (e.g., "Airbnb"), follow these steps to create 
 #### Step 1: Create a New Class Library Project
 
 Create a new class library project following the naming convention:
-
-```
 DynamicMappingSystem.{PartnerName}/
 ├── DynamicMappingSystem.{PartnerName}.csproj
-├── ServiceCollectionExtensions.cs
 ├── Mappers/
 │   ├── From{PartnerName}ReservationMapper.cs
 │   ├── To{PartnerName}ReservationMapper.cs
@@ -190,9 +193,7 @@ DynamicMappingSystem.{PartnerName}/
 │   └── To{PartnerName}RoomMapper.cs
 └── Validators/
     ├── ReservationValidator.cs
-    ├── RoomValidator.cs
-    └── GuestValidator.cs (if applicable)
-```
+    └── RoomValidator.cs
 
 #### Step 2: Create Mappers
   
@@ -239,17 +240,19 @@ namespace DynamicMappingSystem.Airbnb.Mappers
 }
 ```
 
+It is good practice to make this class internal rather than public, and provide a common method to register all Validators and Mappers at once (as shown in Step 4), hence the client consuming these mappers and validators won't accidentally forget to register any.
+
 #### Step 3: Create Validators
 
 Implement FluentValidation validators for the partner models:
-  
+
 ```csharp
 using FluentValidation;
 using Airbnb;
 
 namespace DynamicMappingSystem.Airbnb.Validators
 {
-    public class BookingValidator : AbstractValidator<Booking>
+    internal class BookingValidator : AbstractValidator<Booking>
     {
         public BookingValidator()
         {
@@ -285,74 +288,64 @@ namespace DynamicMappingSystem.Airbnb.Validators
 }
 ```
 
-#### Step 4: Create Service Collection Extensions
+It is good practice to make this class internal rather than public, and provide a common method to register all Validators and Mappers at once (as shown in Step 4), hence the client consuming these mappers and validators won't accidentally forget to register any.
 
-Create an extension method to register all mappers and validators:
-
-```csharp
-using Microsoft.Extensions.DependencyInjection;
-using FluentValidation;
-using DynamicMappingSystem.Core;
-using DynamicMappingSystem.Airbnb.Mappers;
-using DynamicMappingSystem.Airbnb.Validators;
-using AirbnbModels = Airbnb;
-using Models;
-
-namespace DynamicMappingSystem.Airbnb
-{
-    public static class ServiceCollectionExtensions
-    {
-        /// <summary>
-        /// Registers all Airbnb-specific mappers and validators
-        /// </summary>
-        public static IServiceCollection AddAirbnbMappers(this IServiceCollection services)
-        {
-            // Register mappers
-            services.AddSingleton<IMapper<AirbnbModels.Booking, Reservation>, FromAirbnbReservationMapper>();
-            services.AddSingleton<IMapper<Reservation, AirbnbModels.Booking>, ToAirbnbReservationMapper>();
-            services.AddSingleton<IMapper<AirbnbModels.Property, Room>, FromAirbnbRoomMapper>();
-            services.AddSingleton<IMapper<Room, AirbnbModels.Property>, ToAirbnbRoomMapper>();
-
-            // Register validators
-            services.AddSingleton<IValidator<AirbnbModels.Booking>, BookingValidator>();
-            services.AddSingleton<IValidator<AirbnbModels.Property>, PropertyValidator>();
-            
-            return services;
-        }
-    }
-}
-```
-
-#### Step 5: Register the new Integration
-
-In your application startup, register the new mappers:
+#### Step 4: Create public Extension method 
 
 ```csharp
-var services = new ServiceCollection();
-services.AddDynamicMappingSystem();
+    public static class MapHandlerAirbnbExtension
+    {
+        public static IMapHandler AddAirbnbMappers(this IMapHandler mapHandler)
+        {
+            // Your new validators will be registered here
+            mapHandler.RegisterValidator<Airbnb.Booking>(new BookingValidator());
 
-services.AddGoogleMappers();
-services.AddBookingDotComMappers();
-services.AddAirbnbMappers(); // Register new Airbnb integration
+            // Your new mappers will be registered here
+            mapHandler.RegisterMapper<Airbnb.Booking, Models.Reservation>(new FromBookingMapper());
+            
+            return mapHandler;
+        }
+    }
 ```
+
+#### Step 5: Register Mappers and Validators
+
+Register your mappers and validators via the extension method on the `MapHandler` instance:
+
+```csharp
+var mapHandler = MapHandler.Create();
+mapHandler.AddAirbnbMappers();
+```
+
 
 ## Assumptions
 
+- I am aware of mapping libraries like AutoMapper, but this project is supposed to show how this can be done manually.
+- The **public API method signature is fixed to return `object`**, as per the context set by the requirements.
+    - Although returning a typed result (e.g. `Result<T>` with error messages) would be preferable, this is not allowed by the interface.
+    - Returning `null` on error was considered but rejected, as the system expects meaningful error messages.
+    - Therefore, **exceptions are thrown** (with meaningful error messages) on mapping errors. This choice has performance trade-offs and is less graceful for processing large or complex data.
+- **In the requirements context, most models would require validation.**
+    - Therefore, if no validator is found, an **exception is thrown**.
+    - A validator must be registered for each mappable type.
+    - If validation is not needed, an empty implementation of a **validator** should be explicitly provided.
+
+## Limitations
+
+- **Logging is not implemented inside the mapping layer.**
+    - Logging must be handled by the **calling class or higher-level application logic**.
+- **Performance overhead** due to exception handling in case of errors instead of using result types or return codes.
+- **Tight coupling to `IServiceProvider`** may reduce portability to environments with alternative DI containers or service resolution mechanisms.
+- **Type safety is compromised** by the use of `object` return types. Consumers must explicitly cast the result and handle invalid types at runtime.
 - I am aware of mapping libraries like AutoMapper, but this project is supposed to show how this can be done manually.
 - The solution assumes an **`IServiceProvider`-based dependency injection container** is available. All services are resolved using this mechanism.
 - The **public API method signature is fixed to return `object`**, as per the context set by the requirements.
     - Although returning a typed result (e.g. `Result<T>` with error messages) would be preferable, this is not allowed by the interface.
     - Returning `null` on error was considered but rejected, as the system expects meaningful error messages.
     - Therefore, **exceptions are thrown** (with meaningful error messages) on mapping errors. This choice has performance trade-offs and is less graceful for processing large or complex data.
-- **In the requirements context, most models would require validation.**  
-	- Therefore, if no validator is found, an **exception is thrown**.  
-	- A validator must be registered for each mappable type.  
-	- If validation is not needed, an empty implementation of a **validator** should be explicitly provided.
+- **In the requirements context, most models would require validation.**
+    - Therefore, if no validator is found, an **exception is thrown**.
+    - A validator must be registered for each mappable type.
+    - If validation is not needed, an empty implementation of a **validator** should be explicitly provided.
+- Type mismatched e.g. when the provided object is not of given source type, or missing mappers will be detected on runtime only. As far as I know there is no solution that could handle that while compile time. Let me know if there is.
 
-## Limitations
-
-- **Logging is not implemented inside the mapping layer.**  
-    - Logging must be handled by the **calling class or higher-level application logic**.
-- **Performance overhead** due to exception handling in case of errors instead of using result types or return codes.
-- **Tight coupling to `IServiceProvider`** may reduce portability to environments with alternative DI containers or service resolution mechanisms.
-- **Type safety is compromised** by the use of `object` return types. Consumers must explicitly cast the result and handle invalid types at runtime.

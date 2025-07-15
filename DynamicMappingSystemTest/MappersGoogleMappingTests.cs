@@ -20,7 +20,7 @@ namespace DynamicMappingSystemTest
             _toGoogleRoomMapper = mapHandlerStub.GetMapper <Models.Room, Google.Room>();
             _fromGoogleRoomMapper = mapHandlerStub.GetMapper <Google.Room, Models.Room>();
 
-            // Assert that all three mappers have been registered
+            // Assert that all four mappers have been registered
             mapHandlerStub.ValidateAllMappersHaveBeenAskedFor();
             Assert.NotNull(_toGoogleReservationMapper);
             Assert.NotNull(_fromGoogleReservationMapper);

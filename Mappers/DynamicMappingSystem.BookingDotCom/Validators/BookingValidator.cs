@@ -4,7 +4,7 @@ using FluentValidation;
 
 namespace DynamicMappingSystem.BookingDotCom.Validators
 {
-    public class BookingValidator : AbstractDMSValidator<Booking>
+    internal class BookingValidator : AbstractDMSValidator<Booking>
     {
         public BookingValidator()
         {        RuleFor(x => x.BookingId)

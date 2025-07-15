@@ -5,7 +5,9 @@ namespace DynamicMappingSystemTest
     public class MapHandlerStub : IMapHandler
     {
         private Dictionary<Tuple<Type, Type>, IMapper> Mappers = new Dictionary<Tuple<Type, Type>, IMapper>();
-        private List<Tuple<Type, Type>>? FoundMappers;
+        private Dictionary<Type, IDMSValidator> Validators = new Dictionary<Type, IDMSValidator>();
+        private List<Tuple<Type, Type>> FoundMappers = new List<Tuple<Type, Type>>();
+        private List<Type> FoundValidators = new List<Type>();
 
         public object Map(object data, string sourceType, string targetType)
         {
@@ -15,20 +17,23 @@ namespace DynamicMappingSystemTest
 
         public IMapHandler RegisterMapper<TSource, TTarget>(IMapper<TSource, TTarget> converter)
         {
-            Mappers.Add(Tuple.Create(typeof(TSource), typeof(TTarget)), converter);
-            FoundMappers = Mappers.Select(kvp => kvp.Key).ToList();
+            var key = Tuple.Create(typeof(TSource), typeof(TTarget));
+            Mappers.Add(key, converter);
+            FoundMappers.Add(key);
             return this;
         }
 
         public IMapHandler RegisterValidator<T>(AbstractDMSValidator<T> validator)
         {
-            // do nothing. not tested here.
+            var key = typeof(T);
+            Validators.Add(key, validator);
+            FoundValidators.Add(key);
             return this;
         }
 
         public IMapper<TSource, TTarget> GetMapper<TSource, TTarget>()
         {
-            Assert.True(FoundMappers != null, "No Mappers have been found.");
+            Assert.True(FoundMappers.Any(), "No Mappers have been found.");
             var key = Tuple.Create(typeof(TSource), typeof(TTarget));
             if (Mappers.TryGetValue(key, out var mapper))
             {
@@ -38,12 +43,26 @@ namespace DynamicMappingSystemTest
             throw new KeyNotFoundException($"No mapper registered for {typeof(TSource).Name} to {typeof(TTarget).Name}");
         }
 
-        public bool ValidateAllMappersHaveBeenAskedFor()
+        public AbstractDMSValidator<T> GetValidator<T>()
         {
-            Assert.True(FoundMappers != null, "No Mappers have been found.");
-            Assert.True(Mappers.Count > 0, "No mappers have been registered.");
-            // Check if all mappers have been requested at least once.
-            return !FoundMappers.Any(); // FoundMappers must be an empty list at this point
+            Assert.True(FoundValidators.Any(), "No Validators have been found.");
+            var key = typeof(T);
+            if (Validators.TryGetValue(key, out var validator))
+            {
+                FoundValidators.Remove(key);
+                return (AbstractDMSValidator<T>)validator;
+            }
+            throw new KeyNotFoundException($"No validator registered for {typeof(T).Name}");
+        }
+
+        public void ValidateAllMappersHaveBeenAskedFor()
+        {
+            Assert.True(!FoundMappers.Any(), "Not all mappers have been requested.");
+        }
+
+        public void ValidateAllValidatorsHaveBeenAskedFor()
+        {
+            Assert.True(!FoundValidators.Any(), "Not all validators have been requested.");
         }
     }
 }

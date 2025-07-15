@@ -1,20 +1,31 @@
 using BookingDotCom;
-using DynamicMappingSystem.BookingDotCom.Validators;
+using DynamicMappingSystem.BookingDotCom;
+using DynamicMappingSystem.Core;
 using FluentValidation.TestHelper;
 
 namespace DynamicMappingSystemTest
 {
     public class BookingDotComValidatingTests
     {
-        private readonly BookingValidator _bookingValidator;
-        private readonly GuestValidator _guestValidator;
-        private readonly RoomValidator _roomValidator;
+        private readonly AbstractDMSValidator<Booking> _bookingValidator;
+        private readonly AbstractDMSValidator<Guest> _guestValidator;
+        private readonly AbstractDMSValidator<Room> _roomValidator;
 
         public BookingDotComValidatingTests()
         {
-            _bookingValidator = new BookingValidator();
-            _guestValidator = new GuestValidator();
-            _roomValidator = new RoomValidator();
+            var mapHandlerStub = new MapHandlerStub();
+            mapHandlerStub.AddBookingDotComMappers();
+
+            _bookingValidator = mapHandlerStub.GetValidator<Booking>();
+            _guestValidator = mapHandlerStub.GetValidator<Guest>();
+            _roomValidator = mapHandlerStub.GetValidator<Room>();
+
+            // Assert that all three validators have been registered
+            mapHandlerStub.ValidateAllValidatorsHaveBeenAskedFor();
+            Assert.NotNull(_bookingValidator);
+            Assert.NotNull(_guestValidator);
+            Assert.NotNull(_roomValidator);
+
         }
 
         [Fact]
