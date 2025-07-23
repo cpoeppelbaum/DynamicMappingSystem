@@ -6,11 +6,11 @@ using System.Reflection;
 namespace DynamicMappingSystem
 {
     /// <summary>
-    /// Main implementation of the data converter
+    /// Main implementation of the data mapper
     /// </summary>
     public class MapHandler : IMapHandler
     {
-        private readonly Dictionary<Tuple<string, string>, IMapper> _converterRegistry = new Dictionary<Tuple<string, string>, IMapper>();
+        private readonly Dictionary<Tuple<string, string>, IMapper> _mapperRegistry = new Dictionary<Tuple<string, string>, IMapper>();
         private readonly Dictionary<string, Type> _typeRegistry = new Dictionary<string, Type>();
         private readonly Dictionary<string, IDMSValidator> _validatorRegistry = new Dictionary<string, IDMSValidator>();
 
@@ -25,13 +25,13 @@ namespace DynamicMappingSystem
         }
 
         /// <summary>
-        /// Registers a converter instance
+        /// Registers a mapper instance
         /// </summary>
-        public IMapHandler RegisterMapper<TSource, TTarget>(AbstractMapper<TSource, TTarget> converter)
+        public IMapHandler RegisterMapper<TSource, TTarget>(AbstractMapper<TSource, TTarget> mapper)
         {
-            if (converter == null) 
+            if (mapper == null) 
             {
-                throw new ArgumentNullException(nameof(converter));
+                throw new ArgumentNullException(nameof(mapper));
             }
             
             var sourceType = typeof(TSource).FullName;
@@ -43,7 +43,7 @@ namespace DynamicMappingSystem
             }
             
             var key = Tuple.Create(sourceType, targetType);
-            _converterRegistry[key] = converter;
+            _mapperRegistry[key] = mapper;
             
             // Cache the types for faster lookup
             _typeRegistry[sourceType] = typeof(TSource);
@@ -103,20 +103,20 @@ namespace DynamicMappingSystem
                 throw new SourceDataTypeMismatchException(sourceType, data?.GetType()?.FullName ?? "null");
             }
 
-            // Validate source object before conversion
+            // Validate source object before mapping
             var sourceValidationResult = ValidateObject(data, sourceType);
             if (sourceValidationResult.Any())
             {
                 throw new Core.Exceptions.ValidationException(sourceType, sourceValidationResult);
             }
 
-            // Try to get converter from registry first
+            // Try to get mapper from registry first
             var key = Tuple.Create(sourceType, targetType);
             IMapper? mapper = null;
             
-            if (_converterRegistry.TryGetValue(key, out var registeredConverter))
+            if (_mapperRegistry.TryGetValue(key, out var registeredMapper))
             {
-                mapper = registeredConverter;
+                mapper = registeredMapper;
             }
             else
             {
@@ -132,7 +132,7 @@ namespace DynamicMappingSystem
             {
                 if(ex.InnerException == null)
                 {
-                    throw new MappingException($"Error converting from {sourceType} to {targetType}", ex);
+                    throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex);
                 }
 
                 // Re-throw specific MappingExceptions directly
@@ -141,17 +141,17 @@ namespace DynamicMappingSystem
                     throw mappingEx;
                 }
                     
-                throw new MappingException($"Error converting from {sourceType} to {targetType}", ex.InnerException);
+                throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex.InnerException);
             }
-            catch (Exception ex) when (!(ex is MappingException))
+            catch (Exception ex) when (ex is not MappingException)
             {
-                throw new MappingException($"Error converting from {sourceType} to {targetType}", ex);
+                throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex);
             }
 
-            var convertedValidationResult = ValidateObject(result, targetType);
-            if (convertedValidationResult.Any())
+            var mappedValidationResult = ValidateObject(result, targetType);
+            if (mappedValidationResult.Any())
             {
-                throw new Core.Exceptions.ValidationException(targetType, convertedValidationResult);
+                throw new Core.Exceptions.ValidationException(targetType, mappedValidationResult);
             }
 
             return result;
