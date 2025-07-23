@@ -81,7 +81,7 @@ namespace DynamicMappingSystem
 
         public object Map(object data, string sourceType, string targetType)
         {
-            // Validation
+            #region // Check input
             if (data == null) 
             {
                 throw new ArgumentNullException(nameof(data));
@@ -102,32 +102,13 @@ namespace DynamicMappingSystem
             {
                 throw new SourceDataTypeMismatchException(sourceType, data?.GetType()?.FullName ?? "null");
             }
+            #endregion
 
             // Validate source object before mapping
             ValidateObject(data, sourceType);
 
-            // Try to get mapper from registry first
-            var key = Tuple.Create(sourceType, targetType);
-            IMapper? mapper = null;
-            
-            if (_mapperRegistry.TryGetValue(key, out var registeredMapper))
-            {
-                mapper = registeredMapper;
-            }
-            else
-            {
-                throw new UnsupportedMappingException(sourceType, targetType);
-            }
-
-            object result;
-            try
-            {
-                result = mapper.Map(data);
-            }
-            catch (Exception ex)
-            {
-                throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex);
-            }
+            // Execute the mapping
+            var result = MapObject(data, sourceType, targetType);
 
             // Validate source object after mapping
             ValidateObject(result, targetType);
@@ -136,11 +117,43 @@ namespace DynamicMappingSystem
         }
 
         /// <summary>
-        /// Validates an object using the appropriate validator if one exists
+        /// Executes the mapping operation using the registered mapper
         /// </summary>
-        private List<string> ValidateObject(object obj, string typeName)
+        /// <param name="data">The source data object to map</param>
+        /// <param name="sourceType">The fully qualified name of the source type</param>
+        /// <param name="targetType">The fully qualified name of the target type</param>
+        /// <returns>The mapped object</returns>
+        /// <exception cref="UnsupportedMappingException">Thrown when no mapper is found for the source and target type combination</exception>
+        /// <exception cref="MappingException">Thrown when an error occurs during the mapping process</exception>
+        private object MapObject(object data, string sourceType, string targetType)
         {
-            if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
+            // input data has been checked before
+
+            // Try to get mapper from registry first
+            var key = Tuple.Create(sourceType, targetType);
+            if (_mapperRegistry.TryGetValue(key, out var registeredMapper))
+            {
+                try
+                {
+                    return registeredMapper.Map(data);
+                }
+                catch (Exception ex)
+                {
+                    throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex);
+                }
+            }
+            else
+            {
+                throw new UnsupportedMappingException(sourceType, targetType);
+            }
+        }
+
+        /// <summary>
+        /// Validates an object using the appropriate validator if one exists and throws an exception if validation fails or no validator was found.
+        /// </summary>
+        private void ValidateObject(object obj, string typeName)
+        {
+            // input data has been checked before
 
             if (_validatorRegistry.TryGetValue(typeName, out var registeredValidator))
             {
@@ -150,8 +163,10 @@ namespace DynamicMappingSystem
                     throw new Core.Exceptions.ValidationException(typeName, validated.Errors);
                 }
             }
-
-            throw new MappingException($"Validator for type '{typeName}' not found. If no validation is needed, create an empty validator for this type.");
+            else
+            {
+                throw new MappingException($"Validator for type '{typeName}' not found. If no validation is needed, create an empty validator for this type.");
+            }
         }
 
         /// <summary>
