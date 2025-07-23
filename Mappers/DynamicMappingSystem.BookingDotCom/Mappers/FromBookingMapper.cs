@@ -5,7 +5,7 @@ using BookingDotComModels = BookingDotCom;
 
 namespace DynamicMappingSystem.BookingDotCom.Mappers
 {
-    internal class FromBookingMapper : IMapper<BookingDotComModels.Booking, Reservation>
+    internal class FromBookingMapper : AbstractMapper<BookingDotComModels.Booking, Reservation>
     {
         protected override Reservation Map(BookingDotComModels.Booking source)
         {
@@ -29,7 +29,7 @@ namespace DynamicMappingSystem.BookingDotCom.Mappers
             }
             catch (Exception ex) when (!(ex is MappingException))
             {
-                throw new MappingException($"Unexpected error during conversion from BookingDotCom.Booking to Models.Reservation", ex);
+                throw new MappingException($"Unexpected error during mapping from BookingDotCom.Booking to Models.Reservation", ex);
             }
         }
     }

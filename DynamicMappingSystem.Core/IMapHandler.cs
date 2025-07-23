@@ -8,14 +8,14 @@ namespace DynamicMappingSystem.Core
     public interface IMapHandler
     {
         /// <summary>
-        /// Converts a data object from source type to target type
+        /// Maps a data object from source type to target type
         /// </summary>
         object Map(object data, string sourceType, string targetType);
 
         /// <summary>
-        /// Registers a converter for direct registry lookup, improving performance
+        /// Registers a mapper for direct registry lookup, improving performance
         /// </summary>
-        IMapHandler RegisterMapper<TSource, TTarget>(IMapper<TSource, TTarget> converter);
+        IMapHandler RegisterMapper<TSource, TTarget>(AbstractMapper<TSource, TTarget> mapper);
 
         /// <summary>
         /// Registers a validator for direct registry lookup, improving validation performance

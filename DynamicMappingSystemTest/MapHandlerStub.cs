@@ -15,7 +15,7 @@ namespace DynamicMappingSystemTest
             throw new NotImplementedException();
         }
 
-        public IMapHandler RegisterMapper<TSource, TTarget>(IMapper<TSource, TTarget> converter)
+        public IMapHandler RegisterMapper<TSource, TTarget>(AbstractMapper<TSource, TTarget> converter)
         {
             var key = Tuple.Create(typeof(TSource), typeof(TTarget));
             Mappers.Add(key, converter);
@@ -31,14 +31,14 @@ namespace DynamicMappingSystemTest
             return this;
         }
 
-        public IMapper<TSource, TTarget> GetMapper<TSource, TTarget>()
+        public AbstractMapper<TSource, TTarget> GetMapper<TSource, TTarget>()
         {
             Assert.True(FoundMappers.Any(), "No Mappers have been found.");
             var key = Tuple.Create(typeof(TSource), typeof(TTarget));
             if (Mappers.TryGetValue(key, out var mapper))
             {
                 FoundMappers.Remove(key);
-                return (IMapper<TSource, TTarget>)mapper;
+                return (AbstractMapper<TSource, TTarget>)mapper;
             }
             throw new KeyNotFoundException($"No mapper registered for {typeof(TSource).Name} to {typeof(TTarget).Name}");
         }

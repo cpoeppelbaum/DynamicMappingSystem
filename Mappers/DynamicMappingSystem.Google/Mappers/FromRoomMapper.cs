@@ -5,7 +5,7 @@ using GoogleModels = Google;
 
 namespace DynamicMappingSystem.Google.Mappers
 {
-    internal class FromRoomMapper : IMapper<GoogleModels.Room, Room>
+    internal class FromRoomMapper : AbstractMapper<GoogleModels.Room, Room>
     {
         protected override Room Map(GoogleModels.Room source)
         {

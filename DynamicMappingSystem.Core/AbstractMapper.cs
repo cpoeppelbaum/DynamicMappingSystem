@@ -3,7 +3,7 @@
     /// <summary>
     /// Specific mapper for transformation between two particular types
     /// </summary>
-    public abstract class IMapper<TSource, TTarget> : IMapper
+    public abstract class AbstractMapper<TSource, TTarget> : IMapper
     {
         /// <summary>
         /// Maps a source object into a target object

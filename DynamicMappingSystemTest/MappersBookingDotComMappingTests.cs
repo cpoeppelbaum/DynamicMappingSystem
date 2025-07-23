@@ -6,9 +6,9 @@ namespace DynamicMappingSystemTest
 {
     public class MapHandlersBookingDotComTests
     {
-        private readonly IMapper<BookingDotCom.Booking, Models.Reservation> _fromBookingMapper;
-        private readonly IMapper<BookingDotCom.Room, Models.Room> _fromRoomMapper;
-        private readonly IMapper<Models.Reservation, BookingDotCom.Booking> _toBookingMapper;
+        private readonly AbstractMapper<BookingDotCom.Booking, Models.Reservation> _fromBookingMapper;
+        private readonly AbstractMapper<BookingDotCom.Room, Models.Room> _fromRoomMapper;
+        private readonly AbstractMapper<Models.Reservation, BookingDotCom.Booking> _toBookingMapper;
 
         public MapHandlersBookingDotComTests()
         {

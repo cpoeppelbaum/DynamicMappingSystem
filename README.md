@@ -1,6 +1,6 @@
 ﻿# Dynamic Mapping System
 
-A flexible and extensible data mapping system for converting between internal C# data models and external data formats.
+A flexible and extensible data mapping system for mapping between internal C# data models and external data formats.
 It dynamically applies validators and mappers by given types as fully qualified strings, thereby being type safe and validates the input and output models based on given rules.
 
 ## Table of Contents
@@ -39,7 +39,7 @@ The first version made use of IServiceCollection to register the mappers, to ser
 
 ### V2
 
-The second version uses custom registration methods with generic parameters. This registration of the converters also stores the source and target types in a dictionary by basically using the "toString" of the generic parameters as keys and the types as values.
+The second version uses custom registration methods with generic parameters. This registration of the mappers also stores the source and target types in a dictionary by basically using the "toString" of the generic parameters as keys and the types as values.
 Therefore no reflection is used anymore. The use of IServiceCollection could be easily reintroduced by providing an extension method which does the "AddSingleton" while also calling the custom Registration method.
 
 ## Dependencies
@@ -48,7 +48,7 @@ This project uses the nuget package FluentValidation, Version="12.0.0" (Apache L
 
 ## Project Requirements
 
-The system`s functionality is to handle both the conversion of internal models to 3rd party formats and vise versa. Easily extendable and with a specific interface for the given context.
+The system`s functionality is to handle both the mapping of internal models to 3rd party formats and vise versa. Easily extendable and with a specific interface for the given context.
 
 ### 1. Mapping System Core
 
@@ -211,9 +211,9 @@ using AirbnbModels = Airbnb;
 
 namespace DynamicMappingSystem.Airbnb.Mappers
 {
-    internal class FromAirbnbReservationMapper : IMapper<AirbnbModels.Booking, Reservation>
+    internal class FromAirbnbReservationMapper : AbstractMapper<AirbnbModels.Booking, Reservation>
     {
-        public Reservation Convert(AirbnbModels.Booking source)
+        public Reservation Map(AirbnbModels.Booking source)
         {
             if (source == null)
             {
@@ -235,7 +235,7 @@ namespace DynamicMappingSystem.Airbnb.Mappers
             }
             catch (Exception ex) when (!(ex is MappingException))
             {
-                throw new MappingException($"Error converting from Airbnb.Booking to Models.Reservation", ex);
+                throw new MappingException($"Error mapping from Airbnb.Booking to Models.Reservation", ex);
             }
         }
     }

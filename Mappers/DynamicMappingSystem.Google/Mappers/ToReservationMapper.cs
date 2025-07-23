@@ -5,7 +5,7 @@ using GoogleModels = Google;
 
 namespace DynamicMappingSystem.Google.Mappers
 {
-    internal class ToReservationMapper : IMapper<Reservation, GoogleModels.Reservation>
+    internal class ToReservationMapper : AbstractMapper<Reservation, GoogleModels.Reservation>
     {
         protected override GoogleModels.Reservation Map(Reservation source)
         {

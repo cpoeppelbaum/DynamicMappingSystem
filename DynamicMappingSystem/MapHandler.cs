@@ -27,7 +27,7 @@ namespace DynamicMappingSystem
         /// <summary>
         /// Registers a converter instance
         /// </summary>
-        public IMapHandler RegisterMapper<TSource, TTarget>(IMapper<TSource, TTarget> converter)
+        public IMapHandler RegisterMapper<TSource, TTarget>(AbstractMapper<TSource, TTarget> converter)
         {
             if (converter == null) 
             {

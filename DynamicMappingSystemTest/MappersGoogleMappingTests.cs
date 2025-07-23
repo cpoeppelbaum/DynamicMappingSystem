@@ -5,10 +5,10 @@ namespace DynamicMappingSystemTest
 {
     public class MapHandlersGoogleTests
     {
-        private readonly IMapper<Models.Reservation, Google.Reservation> _toGoogleReservationMapper;
-        private readonly IMapper<Google.Reservation, Models.Reservation> _fromGoogleReservationMapper;
-        private readonly IMapper<Models.Room, Google.Room> _toGoogleRoomMapper;
-        private readonly IMapper<Google.Room, Models.Room> _fromGoogleRoomMapper;
+        private readonly AbstractMapper<Models.Reservation, Google.Reservation> _toGoogleReservationMapper;
+        private readonly AbstractMapper<Google.Reservation, Models.Reservation> _fromGoogleReservationMapper;
+        private readonly AbstractMapper<Models.Room, Google.Room> _toGoogleRoomMapper;
+        private readonly AbstractMapper<Google.Room, Models.Room> _fromGoogleRoomMapper;
 
         public MapHandlersGoogleTests()
         {
