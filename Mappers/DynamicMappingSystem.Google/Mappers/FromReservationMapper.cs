@@ -7,7 +7,7 @@ namespace DynamicMappingSystem.Google.Mappers
 {
     internal class FromReservationMapper : IMapper<GoogleModels.Reservation, Reservation>
     {
-        public override Reservation Map(GoogleModels.Reservation source)
+        protected override Reservation Map(GoogleModels.Reservation source)
         {
             if (source == null) 
             {

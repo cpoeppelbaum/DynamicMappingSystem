@@ -7,7 +7,7 @@ namespace DynamicMappingSystem.Google.Mappers
 {
     internal class ToRoomMapper : IMapper<Room, GoogleModels.Room>
     {
-        public override GoogleModels.Room Map(Room source)
+        protected override GoogleModels.Room Map(Room source)
         {
             if (source == null) 
             {

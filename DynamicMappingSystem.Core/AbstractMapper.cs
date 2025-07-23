@@ -8,7 +8,7 @@
         /// <summary>
         /// Maps a source object into a target object
         /// </summary>
-        public abstract TTarget Map(TSource source);
+        protected abstract TTarget Map(TSource source);
 
         public object Map(object source)
         {

@@ -67,7 +67,7 @@ This method maps data between various source and target formats based on the pro
 The system supports the following mappings:
 - From the internal C# data models (e.g., `Models.Reservation`, `Models.Room`, etc.) to
 	- **imagined** formats of a google vacations booking system
-	- imagined formats of the booking.com vacations booking system
+	- **imagined** formats of the booking.com vacations booking system
 	- back to the project specific *internal* models
 
 This project is not related to, or uses any package from any of the aforementioned companies.

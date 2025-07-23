@@ -7,7 +7,7 @@ namespace DynamicMappingSystem.BookingDotCom.Mappers
 {
     internal class FromRoomMapper : IMapper<BookingDotComModels.Room, Room>
     {
-        public override Room Map(BookingDotComModels.Room source)
+        protected override Room Map(BookingDotComModels.Room source)
         {
             if (source == null) 
             {
