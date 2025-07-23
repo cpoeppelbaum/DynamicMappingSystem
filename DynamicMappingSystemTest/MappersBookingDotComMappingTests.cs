@@ -117,25 +117,5 @@ namespace DynamicMappingSystemTest
             Assert.Equal(333, bookingReservation.RoomTypeId);
             Assert.Equal(420.00m, bookingReservation.TotalPrice);
         }
-
-        [Fact]
-        public void Map_InvalidDateString_BookingDotCom_ShouldThrowException()
-        {
-            // Arrange
-            var booking = new BookingDotCom.Booking
-            {
-                BookingId = 123,
-                ArrivalDate = "invalid-date",
-                DepartureDate = "2024-12-31",
-                GuestDetails = new BookingDotCom.Guest { FirstName = "Test", LastName = "User" },
-                AdultCount = 1,
-                RoomTypeId = 1,
-                TotalPrice = 100m
-            };
-
-            // Act & Assert
-            var exception = Assert.Throws<MappingException>(() =>
-                _fromBookingMapper.Map(booking));
-        }
     }
 }

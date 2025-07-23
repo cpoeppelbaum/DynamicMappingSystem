@@ -1,5 +1,4 @@
 using DynamicMappingSystem.Core;
-using DynamicMappingSystem.Core.Exceptions;
 using Models;
 using BookingDotComModels = BookingDotCom;
 
@@ -9,28 +8,16 @@ namespace DynamicMappingSystem.BookingDotCom.Mappers
     {
         protected override Reservation Map(BookingDotComModels.Booking source)
         {
-            if (source == null)
+            return new Reservation
             {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            try
-            {
-                return new Reservation
-                {
-                    Id = source.BookingId.ToString(),
-                    CheckInDate = DateTime.Parse(source.ArrivalDate),
-                    CheckOutDate = DateTime.Parse(source.DepartureDate),
-                    GuestName = $"{source.GuestDetails?.FirstName?.Trim()} {source.GuestDetails?.LastName?.Trim()}".Trim(),
-                    NumberOfGuests = source.AdultCount,
-                    RoomId = source.RoomTypeId.ToString(),
-                    TotalAmount = source.TotalPrice
-                };
-            }
-            catch (Exception ex) when (!(ex is MappingException))
-            {
-                throw new MappingException($"Unexpected error during mapping from BookingDotCom.Booking to Models.Reservation", ex);
-            }
+                Id = source.BookingId.ToString(),
+                CheckInDate = DateTime.Parse(source.ArrivalDate),
+                CheckOutDate = DateTime.Parse(source.DepartureDate),
+                GuestName = $"{source.GuestDetails?.FirstName?.Trim()} {source.GuestDetails?.LastName?.Trim()}".Trim(),
+                NumberOfGuests = source.AdultCount,
+                RoomId = source.RoomTypeId.ToString(),
+                TotalAmount = source.TotalPrice
+            };
         }
     }
 }

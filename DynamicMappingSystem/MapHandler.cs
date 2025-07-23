@@ -104,11 +104,7 @@ namespace DynamicMappingSystem
             }
 
             // Validate source object before mapping
-            var sourceValidationResult = ValidateObject(data, sourceType);
-            if (sourceValidationResult.Any())
-            {
-                throw new Core.Exceptions.ValidationException(sourceType, sourceValidationResult);
-            }
+            ValidateObject(data, sourceType);
 
             // Try to get mapper from registry first
             var key = Tuple.Create(sourceType, targetType);
@@ -128,31 +124,13 @@ namespace DynamicMappingSystem
             {
                 result = mapper.Map(data);
             }
-            catch (TargetInvocationException ex)
-            {
-                if(ex.InnerException == null)
-                {
-                    throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex);
-                }
-
-                // Re-throw specific MappingExceptions directly
-                if (ex.InnerException is MappingException mappingEx)
-                {
-                    throw mappingEx;
-                }
-                    
-                throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex.InnerException);
-            }
-            catch (Exception ex) when (ex is not MappingException)
+            catch (Exception ex)
             {
                 throw new MappingException($"Error mapping from {sourceType} to {targetType}", ex);
             }
 
-            var mappedValidationResult = ValidateObject(result, targetType);
-            if (mappedValidationResult.Any())
-            {
-                throw new Core.Exceptions.ValidationException(targetType, mappedValidationResult);
-            }
+            // Validate source object after mapping
+            ValidateObject(result, targetType);
 
             return result;
         }
@@ -164,10 +142,13 @@ namespace DynamicMappingSystem
         {
             if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
 
-            // Try to get validator from registry first (fastest)
             if (_validatorRegistry.TryGetValue(typeName, out var registeredValidator))
             {
-                return registeredValidator.ValidateObject(obj).Errors;
+                var validated = registeredValidator.ValidateObject(obj);
+                if (validated.Errors.Any())
+                {
+                    throw new Core.Exceptions.ValidationException(typeName, validated.Errors);
+                }
             }
 
             throw new MappingException($"Validator for type '{typeName}' not found. If no validation is needed, create an empty validator for this type.");

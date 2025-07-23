@@ -1,5 +1,4 @@
 using DynamicMappingSystem.Core;
-using DynamicMappingSystem.Core.Exceptions;
 using Models;
 using GoogleModels = Google;
 
@@ -9,28 +8,16 @@ namespace DynamicMappingSystem.Google.Mappers
     {
         protected override GoogleModels.Reservation Map(Reservation source)
         {
-            if (source == null)
+            return new GoogleModels.Reservation
             {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            try
-            {
-                return new GoogleModels.Reservation
-                {
-                    ReservationId = source.Id ?? string.Empty,
-                    CheckInTimestamp = ConvertDateTimeToUnixTimestamp(source.CheckInDate),
-                    CheckOutTimestamp = ConvertDateTimeToUnixTimestamp(source.CheckOutDate),
-                    GuestFullName = source.GuestName ?? string.Empty,
-                    PartySize = source.NumberOfGuests,
-                    AccommodationId = source.RoomId ?? string.Empty,
-                    TotalCost = (double)source.TotalAmount
-                };
-            }
-            catch (Exception ex) when (!(ex is MappingException))
-            {
-                throw new MappingException($"Unexpected error during conversion from Models.Reservation to Google.Reservation", ex);
-            }
+                ReservationId = source.Id ?? string.Empty,
+                CheckInTimestamp = ConvertDateTimeToUnixTimestamp(source.CheckInDate),
+                CheckOutTimestamp = ConvertDateTimeToUnixTimestamp(source.CheckOutDate),
+                GuestFullName = source.GuestName ?? string.Empty,
+                PartySize = source.NumberOfGuests,
+                AccommodationId = source.RoomId ?? string.Empty,
+                TotalCost = (double)source.TotalAmount
+            };
         }
 
         private static long ConvertDateTimeToUnixTimestamp(DateTime dateTime)
